@@ -25,18 +25,44 @@ import argparse
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
+def interpret(files, algo = 'md5'):
+    size = []
+    filenames = []
+    md5 = {}
+    fullFilenames = []
+    if algo == 'md5':
+        fullFilenames = [re.sub('MD5 \((.*)\) =.*','\\1', f) for f in files]
+        for f in files:
+            key = re.sub('.*\) = ', '', f)
+            if key not in md5:
+                md5[key] = []
+            md5[key].append(re.sub('MD5 \((.*)\) =.*','\\1', f))
+    elif algo == 'crc32 --filename':
+        fullFilenames = [re.sub('[0-9a-f\t ]+', '', f) for f in files]
+        for f in files:
+            key = re.sub('[ \t].*', '', f)
+            if key not in md5:
+                md5[key] = []
+            md5[key].append(re.sub('[0-9a-f]+\t', '', f))
+    filenames = [os.path.basename(f) for f in fullFilenames]
+    return fullFilenames, filenames, md5
+
 argParser = argparse.ArgumentParser(description="Argument parser")
 argParser.add_argument('path')
 argParser.add_argument('-md5', '--md5', action='store_true', default = True,
                        help='choose the md5 fingerprint algorythm')
 argParser.add_argument('-crc32', '--crc32', action='store_true', default = False,
                        help='choose the crc32 fingerprint algorythm')
+argParser.add_argument('-s', '--size', action='store', default = 'k',
+                       choices = ['k', 'M', 'G', 'T', 'P'],
+                       help='choose the md5 fingerprint algorythm')
 args = argParser.parse_args()
 
 algo = 'md5'
 if args.crc32:
-    algo = 'crc32'
+    algo = 'crc32 --filename'
 
+minSize = args.size
 f = args.path
 
 print(f'findDuplicates.py - Copyright (C) 2023 giovanni.organtini@gmail.com')
@@ -58,15 +84,7 @@ files = output.stdout.decode("utf-8").split('\n')
 files = files[:-1]
 
 # check if there are duplicates
-fullFilenames = [re.sub('MD5 \((.*)\) =.*','\\1', f) for f in files]
-filenames = []
-filenames = [os.path.basename(f) for f in fullFilenames]
-md5 = {}
-for f in files:
-    key = re.sub('.*\) = ', '', f)
-    if key not in md5:
-        md5[key] = []
-    md5[key].append(re.sub('MD5 \((.*)\) =.*','\\1', f))
+fullFilenames, filenames, md5 = interpret(files, algo)
 
 # md5 is a dictionary that associates the md5 key of each file to its name
 md5keys = list(set(list(md5.keys())))
