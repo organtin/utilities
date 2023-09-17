@@ -5,6 +5,8 @@ from subprocess import PIPE
 import sys
 from itertools import combinations
 import filecmp
+import argparse 
+
 '''
     findDuplicates.py - find duplicated files in your disk
     Copyright (C) 2023 giovanni.organtini@gmail.com
@@ -23,8 +25,19 @@ import filecmp
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-# this must be improved: takes the first argument as the directory to navigate
-f = sys.argv[1]
+argParser = argparse.ArgumentParser(description="Argument parser")
+argParser.add_argument('path')
+argParser.add_argument('-md5', '--md5', action='store_true', default = True,
+                       help='choose the md5 fingerprint algorythm')
+argParser.add_argument('-crc32', '--crc32', action='store_true', default = False,
+                       help='choose the crc32 fingerprint algorythm')
+args = argParser.parse_args()
+
+algo = 'md5'
+if args.crc32:
+    algo = 'crc32'
+
+f = args.path
 
 print(f'findDuplicates.py - Copyright (C) 2023 giovanni.organtini@gmail.com')
 print(f'This program comes with ABSOLUTELY NO WARRANTY; for details')
@@ -34,10 +47,10 @@ print(f'under certain conditions, as detailed in the license.')
 print(f'\nType anything to continue')
 
 x = input()
-print(f'\nFinding duplicates in {f}. Please be patient...')
+print(f'\nFinding duplicates in {f}: please be patient...')
 
 # find files
-cmd = 'find ' + f + ' -path \*.DS_Store -prune -o -type f -exec md5 {} \;'
+cmd = 'find ' + f + ' -path \*.DS_Store -prune -o -type f -exec ' + algo + ' {} \;'
 output = subprocess.run(cmd, stdout = PIPE, stderr = PIPE, shell = True)
 files = output.stdout.decode("utf-8").split('\n')
 
