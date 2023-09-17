@@ -46,15 +46,14 @@ def interpret(files, algo = 'md5'):
     filenames = [os.path.basename(f) for f in fullFilenames]
     return fullFilenames, filenames, md5
 
-argParser = argparse.ArgumentParser(description="Argument parser")
+argParser = argparse.ArgumentParser(description = 'A utility to find duplicated files')
 argParser.add_argument('path')
 argParser.add_argument('-md5', '--md5', action='store_true', default = True,
                        help='choose the md5 fingerprint algorythm')
 argParser.add_argument('-crc32', '--crc32', action='store_true', default = False,
                        help='choose the crc32 fingerprint algorythm')
-argParser.add_argument('-s', '--size', action='store', default = 'k',
-                       choices = ['c', 'k', 'M', 'G', 'T', 'P'],
-                       help='minimum size of the duplicated files')
+argParser.add_argument('-s', '--size', action='store', default = '1k',
+                       help='minimum size of the duplicated files (can use common suffixes)')
 args = argParser.parse_args()
 
 algo = 'md5'
@@ -69,24 +68,23 @@ print(f'This program comes with ABSOLUTELY NO WARRANTY; for details')
 print(f'see <https://www.gnu.org/licenses/>.')
 print(f'This is free software, and you are welcome to redistribute it')
 print(f'under certain conditions, as detailed in the license.')
-print(f'\nType anything to continue')
+print(f'\nEnter to continue')
 
 x = input()
-print(f'\nFinding duplicates in {f} larger than 1{args.size}: please be patient...')
+print(f'\nFinding duplicates in {f} larger than {args.size}: please be patient...')
 
-# find files
-cmd = 'find ' + f + ' -path \*.DS_Store -prune -o -type f -size +1' + minSize + ' -exec ' + algo + ' {} \;'
-print(cmd)
+# find files with the given criteria
+cmd = 'find ' + f + ' -path \*.DS_Store -prune -o -type f -size +' + minSize + ' -exec ' + algo + ' {} \;'
 output = subprocess.run(cmd, stdout = PIPE, stderr = PIPE, shell = True)
 files = output.stdout.decode("utf-8").split('\n')
 
 # remove the last, empty, string
 files = files[:-1]
 
-# check if there are duplicates
+# build the lists 
 fullFilenames, filenames, md5 = interpret(files, algo)
 
-# md5 is a dictionary that associates the md5 key of each file to its name
+# md5 is a dictionary that associates the md5/crc32 key of each file to its name
 md5keys = list(set(list(md5.keys())))
 
 for k in md5keys:
