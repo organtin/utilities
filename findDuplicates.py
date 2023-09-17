@@ -26,7 +26,6 @@ import argparse
 '''
 
 def interpret(files, algo = 'md5'):
-    size = []
     filenames = []
     md5 = {}
     fullFilenames = []
@@ -54,8 +53,8 @@ argParser.add_argument('-md5', '--md5', action='store_true', default = True,
 argParser.add_argument('-crc32', '--crc32', action='store_true', default = False,
                        help='choose the crc32 fingerprint algorythm')
 argParser.add_argument('-s', '--size', action='store', default = 'k',
-                       choices = ['k', 'M', 'G', 'T', 'P'],
-                       help='choose the md5 fingerprint algorythm')
+                       choices = ['c', 'k', 'M', 'G', 'T', 'P'],
+                       help='minimum size of the duplicated files')
 args = argParser.parse_args()
 
 algo = 'md5'
@@ -73,10 +72,11 @@ print(f'under certain conditions, as detailed in the license.')
 print(f'\nType anything to continue')
 
 x = input()
-print(f'\nFinding duplicates in {f}: please be patient...')
+print(f'\nFinding duplicates in {f} larger than 1{args.size}: please be patient...')
 
 # find files
-cmd = 'find ' + f + ' -path \*.DS_Store -prune -o -type f -exec ' + algo + ' {} \;'
+cmd = 'find ' + f + ' -path \*.DS_Store -prune -o -type f -size +1' + minSize + ' -exec ' + algo + ' {} \;'
+print(cmd)
 output = subprocess.run(cmd, stdout = PIPE, stderr = PIPE, shell = True)
 files = output.stdout.decode("utf-8").split('\n')
 
